@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Welcome to Album Roulette 🎲</title>
+<style>
+  body {
+    background: #0f0f0f;
+    color: #fff;
+    font-family: Roboto, -apple-system, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 48px 16px;
+    margin: 0;
+  }
+  main { max-width: 620px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  .tagline { color: #aaa; margin: 0 0 32px; font-size: 15px; }
+  .card {
+    background: #1c1c1c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 { font-size: 16px; margin: 0 0 6px; }
+  .card p { color: #ccc; font-size: 14px; line-height: 1.55; margin: 0; }
+  .card p + p { margin-top: 8px; }
+  kbd {
+    background: #333;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .go {
+    display: inline-block;
+    background: #f00;
+    color: #fff;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 12px 22px;
+    border-radius: 24px;
+    margin-top: 16px;
+  }
+  .go:hover { background: #d00; }
+  .fine { color: #888; font-size: 12px; margin-top: 24px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🎲 Album Roulette</h1>
+  <p class="tagline">Play a random album from your YouTube Music library — start to finish, the way albums were meant to be heard.</p>
+
+  <div class="card">
+    <h2>🎲 Fully random</h2>
+    <p>Click the <kbd>🎲</kbd> in the YouTube Music header (or this extension's toolbar icon, from any tab). A random album from your library starts playing at track 1 — no shuffle, no radio, just the album. It avoids repeating your last 20 picks.</p>
+  </div>
+
+  <div class="card">
+    <h2>Semi-🎲 &amp; genres</h2>
+    <p>Click the <kbd>▾</kbd> next to the die (or right-click the die) to pick by genre — <em>Jazz</em>, <em>Soundtracks &amp; Musicals</em>, <em>Classical</em>, and more — or hit <strong>Semi-🎲 “Deal me 6”</strong> to get six albums from six different genres and choose by mood.</p>
+    <p><strong>Genres take a little while to appear.</strong> On first run, the extension quietly identifies each album's genre in the background using free public music databases (Apple's iTunes Search and MusicBrainz). A large library takes an hour or so — the popover shows progress, and it only happens once. The 🎲 itself works immediately.</p>
+  </div>
+
+  <div class="card">
+    <h2>Private by design</h2>
+    <p>No account, no API key, no server. Your library list stays in your browser; the only thing ever sent anywhere is album title + artist to the public genre databases above.</p>
+  </div>
+
+  <a class="go" href="https://music.youtube.com/">Open YouTube Music →</a>
+
+  <p class="fine">Genre chips appear only for genres you actually own albums in, so your menu is as personal as your library. Each genre count grows as tagging progresses.</p>
+</main>
+</body>
+</html>

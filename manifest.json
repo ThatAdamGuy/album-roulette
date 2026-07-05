@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "Album Roulette for YouTube Music",
+  "version": "0.2.0",
+  "description": "One click plays a random album from your YouTube Music library, start to finish. Genre picks and a semi-random six-album deal included.",
+  "permissions": ["storage", "contextMenus"],
+  "host_permissions": [
+    "https://music.youtube.com/*",
+    "https://itunes.apple.com/*",
+    "https://musicbrainz.org/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Play a random album" },
+  "commands": {
+    "roll-random": {
+      "suggested_key": { "default": "Alt+Shift+R" },
+      "description": "Play a random album from your library"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://music.youtube.com/*"],
+      "js": ["content.js"],
+      "css": ["style.css"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://music.youtube.com/*"],
+      "js": ["page.js"],
+      "world": "MAIN",
+      "run_at": "document_end"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
