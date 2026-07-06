@@ -1,17 +1,24 @@
+/* Kept deliberately compact — this sits inside YTM's own absolutely-
+   positioned right-content cluster, and every extra pixel here narrows
+   whatever budget YTM computes for the search box before collapsing it.
+   flex-shrink:0 protects OUR icon from becoming squished/distorted if
+   space still gets tight, regardless of root cause. */
 #ytra-wrap {
   display: flex;
   align-items: center;
-  margin-right: 4px;
+  flex-shrink: 0;
+  margin-right: 2px;
 }
 
 #ytra-button {
   background: none;
   border: none;
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
-  padding: 8px 4px 8px 8px;
+  padding: 6px 2px 6px 6px;
   border-radius: 50%;
+  flex-shrink: 0;
   transition: background 0.15s;
 }
 
@@ -30,8 +37,9 @@
   color: #aaa;
   font-size: 14px;
   cursor: pointer;
-  padding: 8px 6px;
+  padding: 6px 4px;
   border-radius: 8px;
+  flex-shrink: 0;
 }
 
 #ytra-chevron:hover {
@@ -89,6 +97,24 @@
 
 .ytra-semi:hover {
   background: rgba(255, 255, 255, 0.15);
+}
+
+.ytra-keep-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #ddd;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.ytra-keep-row input[type="checkbox"] {
+  accent-color: #f00;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  margin: 0;
 }
 
 .ytra-chips {

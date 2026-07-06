@@ -10,6 +10,7 @@
   const BUCKETS_KEY = 'ytra_buckets';
   const HISTORY_KEY = 'ytra_history';
   const PENDING_KEY = 'ytra_pending';
+  const KEEP_ROLLING_KEY = 'ytra_keep_rolling';
   const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
   const HISTORY_MAX = 20;
   // iTunes pacing per research (July 2026): 3-4s spacing (~15-20/min) has a
@@ -22,6 +23,8 @@
   const ENRICH_BACKOFF_MAX_MS = 720000;
 
   let busy = false;
+  const LAST_BUCKET_KEY = 'ytra_last_bucket'; // storage, not a variable: rolls
+  // hard-navigate, so page-scoped state dies before Keep Rolling needs it
 
   // ---- genre buckets -------------------------------------------------------
   // Raw iTunes primaryGenreName → coarse bucket. Raw strings are stored, so
@@ -126,8 +129,120 @@
     } else if (msg.type === 'YTRA_PLAY_TIMEOUT') {
       rollDone();
       toast('Album loaded — press ▶ to start it', 6000);
+    } else if (msg.type === 'YTRA_ALBUM_ENDED') {
+      handleAlbumEnded();
     }
   });
+
+  // Three-note-ish completion chime (C4 G4 B4 C5 — a "curtain rising" motif,
+  // not a triad, so it doesn't read as a generic "ta-da" or an error tone).
+  // Synthesized via Web Audio, not a bundled file: no licensing question,
+  // near-zero code size. Marks the album boundary regardless of what happens
+  // next — full stop, Keep Rolling, or YTM's own Autoplay taking over.
+  function playChime() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const notes = [261.63, 392.0, 493.88, 523.25];
+      const step = 0.16;
+      const start = ctx.currentTime + 0.02;
+      notes.forEach((freq, i) => {
+        const t0 = start + i * step;
+        const dur = i === notes.length - 1 ? 0.65 : step * 0.9;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(0.22, t0 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.05);
+      });
+      setTimeout(() => ctx.close(), (notes.length * step + 1.2) * 1000);
+    } catch (e) {
+      // Web Audio unavailable — never block the roll over a missing chime.
+    }
+  }
+
+  // Duck whatever's already audible — by the time we detect the boundary,
+  // YTM's own Autoplay may have already started a suggested track — pause
+  // it, hold a beat of silence, play the chime, hold another beat, then
+  // either continue rolling or let the ducked track resume. Without the
+  // ducking + buffers, the chime gets flattened between the tail of one
+  // song and the head of the next (reported after first real-world test).
+  // pause()/play() on the shared <video> element are standard media APIs,
+  // safe to call directly from this isolated-world script.
+  let lastBoundaryTs = 0;
+
+  // Shares the page's localStorage with page.js's breadcrumb log.
+  function dbgLog(msg) {
+    try {
+      const log = JSON.parse(localStorage.getItem('ytra_log') || '[]');
+      log.push(`${new Date().toISOString().slice(11, 19)} [c] ${msg}`);
+      localStorage.setItem('ytra_log', JSON.stringify(log.slice(-60)));
+    } catch (e) { /* never break over logging */ }
+  }
+
+  async function handleAlbumEnded() {
+    // One boundary, one handling: ignore echoes from duplicate detectors
+    // (stale MAIN-world copies after extension reloads) and any boundary
+    // arriving while a roll is already in flight.
+    if (busy) { dbgLog('boundary ignored: busy'); return; }
+    if (Date.now() - lastBoundaryTs < 20000) { dbgLog('boundary ignored: cooldown'); return; }
+    lastBoundaryTs = Date.now();
+    dbgLog('boundary accepted → chime window');
+
+    const video = document.querySelector('video');
+    const wasPlaying = !!(video && !video.paused);
+    video?.pause();
+    // Enforce the pause through the whole chime window: with YTM Autoplay
+    // ON, its suggested next track can start playing a beat AFTER our pause
+    // landed (reported as "half a second of another album, then the chime").
+    let sneak = false;
+    const guard = setInterval(() => {
+      const v = document.querySelector('video');
+      if (v && !v.paused) {
+        sneak = true;
+        v.pause();
+      }
+    }, 120);
+    const { [KEEP_ROLLING_KEY]: keepRolling = false } = await chrome.storage.local.get(KEEP_ROLLING_KEY);
+    let nextPickPromise = null;
+    if (keepRolling) {
+      busy = true;
+      setButtonSpin(true);
+      closePopover();
+      nextPickPromise = chrome.storage.local.get(LAST_BUCKET_KEY)
+        .then(({ [LAST_BUCKET_KEY]: lastBucket = null }) => chooseRandomAlbum(lastBucket));
+    }
+    await sleep(900);
+    playChime();
+    await sleep(1700);
+    if (keepRolling) {
+      // Guard stays armed through the pick/storage/navigation window —
+      // YTM's Autoplay can wake up again during it (review catch). The
+      // interval dies with the page when the roll's navigation lands.
+      try {
+        const pick = await nextPickPromise;
+        await playPick(pick);
+      } catch (err) {
+        toast(`Album Roulette: ${err.message}`, 6000);
+        rollDone();
+        clearInterval(guard);
+        return;
+      }
+      setTimeout(() => clearInterval(guard), 15000); // failsafe if the roll errored out
+    } else {
+      clearInterval(guard);
+      if (wasPlaying || sneak) {
+        // Not rolling on: hand playback back to whatever YTM was doing.
+        document.querySelector('video')?.play();
+      }
+    }
+  }
 
   function callPage(cmd, extra = {}) {
     return new Promise((resolve, reject) => {
@@ -197,26 +312,31 @@
     return (m === 10 && now.getDate() >= 15) || m === 11 || (m === 0 && now.getDate() <= 5);
   }
 
+  async function chooseRandomAlbum(bucket) {
+    const albums = await getAlbums(false);
+    const genres = await getGenres();
+    let pool;
+    if (bucket) {
+      pool = albums.filter((a) => bucketOf(genres[a.browseId]) === bucket);
+      if (!pool.length) throw new Error(`No ${BUCKET_LABELS[bucket] || bucket} albums tagged yet`);
+    } else {
+      pool = albums.filter((a) => {
+        const raw = genres[a.browseId];
+        return bucketOf(raw) !== 'holiday' || holidayInSeason(raw);
+      });
+      if (!pool.length) pool = albums; // all-holiday library — so be it
+    }
+    return pickFrom(pool);
+  }
+
   async function playRandomAlbum(bucket) {
     if (busy) return;
     busy = true;
     setButtonSpin(true);
     closePopover();
+    chrome.storage.local.set({ [LAST_BUCKET_KEY]: bucket || null });
     try {
-      const albums = await getAlbums(false);
-      const genres = await getGenres();
-      let pool;
-      if (bucket) {
-        pool = albums.filter((a) => bucketOf(genres[a.browseId]) === bucket);
-        if (!pool.length) throw new Error(`No ${BUCKET_LABELS[bucket] || bucket} albums tagged yet`);
-      } else {
-        pool = albums.filter((a) => {
-          const raw = genres[a.browseId];
-          return bucketOf(raw) !== 'holiday' || holidayInSeason(raw);
-        });
-        if (!pool.length) pool = albums; // all-holiday library — so be it
-      }
-      const pick = await pickFrom(pool);
+      const pick = await chooseRandomAlbum(bucket);
       await playPick(pick);
     } catch (err) {
       toast(`Album Roulette: ${err.message}`, 6000);
@@ -225,6 +345,7 @@
   }
 
   async function playPick(pick) {
+    dbgLog(`pick: ${pick.title.slice(0, 30)} [${pick.browseId.slice(0, 12)}]`);
     toast(`🎲 ${pick.title}`, 5000);
     await callPage('PLAY_ALBUM', { browseId: pick.browseId });
     clearTimeout(rollSafetyTimer);
@@ -526,6 +647,7 @@
     popover.dataset.view = 'main';
     const albums = await getAlbums(false).catch(() => []);
     const genres = await getGenres();
+    const { [KEEP_ROLLING_KEY]: keepRolling = false } = await chrome.storage.local.get(KEEP_ROLLING_KEY);
     const counts = {};
     let tagged = 0;
     for (const a of albums) {
@@ -546,6 +668,20 @@
       },
         document.createTextNode(BUCKET_LABELS[b] + ' '),
         el('span', { text: String(counts[b]) })));
+
+    const keepCheckbox = document.createElement('input');
+    keepCheckbox.type = 'checkbox';
+    keepCheckbox.id = 'ytra-keep-checkbox';
+    keepCheckbox.checked = !!keepRolling;
+    keepCheckbox.addEventListener('change', () => {
+      chrome.storage.local.set({ [KEEP_ROLLING_KEY]: keepCheckbox.checked });
+    });
+    const keepRow = el('label', {
+      class: 'ytra-keep-row',
+      for: 'ytra-keep-checkbox',
+      title: 'When an album finishes, a chime marks the boundary, and — if left on — another random album starts automatically. If YouTube Music’s own Autoplay is also on, you might briefly hear one of its suggestions before the next roll takes over.',
+    }, keepCheckbox, document.createTextNode(' Keep rolling 🔁 when an album finishes'));
+
     popover.replaceChildren(
       el('div', { class: 'ytra-pop-title' },
         document.createTextNode('Album Roulette'),
@@ -575,6 +711,7 @@
             text: `Tagging genres… ${tagged}/${albums.length} · fills in over an hour or so`,
           })]
         : []),
+      keepRow,
       el('button', { class: 'ytra-semi', text: 'Semi-🎲  Deal me 6', onclick: () => renderDealView() }),
       el('div', { class: 'ytra-chips' },
         ...(chips.length ? chips
@@ -621,6 +758,7 @@
       busy = true;
       setButtonSpin(true);
       closePopover();
+      chrome.storage.local.set({ [LAST_BUCKET_KEY]: null }); // Semi-🎲 is a one-off spread; Keep Rolling reverts to full-random
       try {
         await recordPick(pick);
         await playPick(pick);
