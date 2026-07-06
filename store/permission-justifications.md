@@ -15,7 +15,7 @@ Album Roulette uses chrome.storage.local to cache the user's YouTube Music libra
 ## Permission: `contextMenus`
 
 ```
-Album Roulette adds a right-click menu to its own toolbar icon that lists the genres present in the user's library (e.g. "Jazz", "Metal") so the user can roll a random album within a specific genre without first opening the popover. This is a convenience shortcut to the extension's core single purpose and does not add any menu items to web page content.
+Album Roulette adds a right-click menu to its own toolbar icon that lists the genres present in the user's library (e.g. "Jazz", "Classical") so the user can roll a random album within a specific genre without first opening the popover. This is a convenience shortcut to the extension's core single purpose and does not add any menu items to web page content.
 ```
 
 ---
@@ -31,7 +31,7 @@ This is the extension's core function. Album Roulette reads the signed-in user's
 ## Host permission: `itunes.apple.com`
 
 ```
-Used to look up an album's genre so it can be labeled and filtered on on in the extension's genre chips. The extension sends only the album title and artist name (already visible in the user's own library) to Apple's public, keyless iTunes Search API and stores the returned genre locally. This is a background, best-effort enrichment step; no user account or personal data is involved.
+Used to look up an album's genre so it can be labeled and filtered in the extension's genre chips. The extension sends only the album title and artist name (already visible in the user's own library) to Apple's public, keyless iTunes Search API and stores the returned genre locally. This is a background, best-effort enrichment step; no user account or personal data is involved.
 ```
 
 ---

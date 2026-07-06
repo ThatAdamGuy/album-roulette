@@ -35,7 +35,7 @@ FEATURES
 
 - One-click random album, start to finish, no shuffle
 - Works with uploaded albums, not just streaming catalog albums
-- Genre chips — albums are auto-tagged by genre in the background, so you can roll "Jazz," "Metal," or whatever's in your library specifically
+- Genre chips — albums are auto-tagged by genre in the background, so you can roll "Jazz," "Classical," "Soundtracks & Musicals," or whatever your library holds
 - Semi-random "Deal me 6" — see six album covers pulled from six different genres and pick the one you're in the mood for
 - Optional Keep Rolling mode — when an album ends, a short chime plays and the next random album starts automatically, so you can queue up a whole random listening session hands-free
 - Keyboard shortcut (Alt+Shift+R) to roll from anywhere
