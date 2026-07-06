@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Album Roulette for YouTube Music</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #0f0f0f;
+    color: #fff;
+    font-family: Roboto, -apple-system, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 48px 16px;
+    margin: 0;
+  }
+  main { max-width: 700px; width: 100%; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .tagline { color: #aaa; margin: 0 0 4px; font-size: 15px; }
+  .effective { color: #888; margin: 0 0 32px; font-size: 13px; }
+  h2 { font-size: 18px; margin: 36px 0 12px; }
+  h2:first-of-type { margin-top: 0; }
+  p, li { color: #ccc; font-size: 14px; line-height: 1.65; }
+  ul, ol { padding-left: 20px; margin: 8px 0; }
+  li + li { margin-top: 6px; }
+  a { color: #fff; }
+  .card {
+    background: #1c1c1c;
+    border: 1px solid rgba(255, 0, 0, 0.25);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 8px;
+  }
+  .card p { color: #ddd; margin: 0; }
+  .card p + p { margin-top: 8px; }
+  code {
+    background: #333;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 13px;
+  }
+  .back {
+    display: inline-block;
+    margin-bottom: 24px;
+    color: #aaa;
+    font-size: 14px;
+    text-decoration: none;
+  }
+  .back:hover { color: #fff; }
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #888;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  footer a { color: #ccc; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="index.html">← Back to Album Roulette</a>
+
+  <h1>Privacy Policy</h1>
+  <p class="tagline">Album Roulette for YouTube Music</p>
+  <p class="effective">Effective date: July 6, 2026</p>
+
+  <div class="card">
+    <p><strong>Summary:</strong> Album Roulette collects no personal data. It has no servers, no analytics, and no user accounts. It never sells or shares any data, because it never collects any to begin with.</p>
+  </div>
+
+  <h2>1. Overview</h2>
+  <p>This policy explains what Album Roulette for YouTube Music (the "extension") stores, what it sends over the network, and to whom. If you read nothing else, read the summary above — everything below is detail in support of it.</p>
+
+  <h2>2. What the extension stores</h2>
+  <p>Everything the extension stores lives locally in your browser's extension storage (<code>chrome.storage.local</code>), on your device only:</p>
+  <ul>
+    <li>A cached list of the albums in your own YouTube Music library — titles, artists, cover-art URLs, and internal album IDs.</li>
+    <li>Genre tags for those albums.</li>
+    <li>The last 20 albums picked, so the "random" button can avoid repeating itself.</li>
+    <li>Your settings, such as the Keep Rolling toggle.</li>
+  </ul>
+  <p>None of this data leaves your device, except for the narrow, specific case described in Section 3 below. Uninstalling the extension deletes all of it.</p>
+
+  <h2>3. Third-party lookups (genre identification)</h2>
+  <p>To figure out an album's genre, the extension sends only the album's <strong>title</strong> and <strong>artist name</strong> — nothing else; no account identifiers, no listening history, no cookies added by the extension — to two public music-metadata services:</p>
+  <ul>
+    <li><a href="https://performance-partners.apple.com/search-api">Apple's iTunes Search API</a> (see <a href="https://www.apple.com/legal/privacy/">Apple's privacy policy</a>)</li>
+    <li><a href="https://musicbrainz.org">the MusicBrainz API</a> (see <a href="https://metabrainz.org/privacy">MusicBrainz's privacy policy</a>)</li>
+  </ul>
+  <p>These requests are made directly from your browser to those services and are subject to their own privacy policies, linked above. Results are cached locally, so each album is looked up at most a handful of times, ever.</p>
+
+  <h2>4. YouTube Music access</h2>
+  <p>The extension runs only on <code>music.youtube.com</code> and reads your album library using your own existing signed-in session, entirely within your browser, solely to provide the extension's features (rolling and playing albums). It does not transmit any YouTube data to the developer or to any server operated by the developer — no such server exists. Album Roulette is not affiliated with or endorsed by YouTube or Google.</p>
+
+  <h2>5. Permissions explained</h2>
+  <ul>
+    <li><strong>storage</strong> — for the local caches and settings described in Section 2.</li>
+    <li><strong>contextMenus</strong> — for the right-click genre menu on the toolbar icon.</li>
+    <li><strong>Host access to music.youtube.com</strong> — where the extension does its work.</li>
+    <li><strong>Host access to itunes.apple.com and musicbrainz.org</strong> — for the genre lookups described in Section 3.</li>
+  </ul>
+
+  <h2>6. Data sale and sharing</h2>
+  <p>Never. There is no advertising, no analytics, and no tracking of any kind in this extension.</p>
+
+  <h2>7. Changes to this policy</h2>
+  <p>Any future changes to this policy will be posted at this same URL with an updated effective date.</p>
+
+  <h2>8. Contact</h2>
+  <p>Questions or concerns: open an issue at <a href="https://github.com/ThatAdamGuy/album-roulette/issues">github.com/ThatAdamGuy/album-roulette/issues</a>, or email <a href="mailto:adam@thriendorfaux.com">adam@thriendorfaux.com</a>.</p>
+
+  <footer>
+    <p><a href="index.html">← Back to Album Roulette</a></p>
+  </footer>
+</main>
+</body>
+</html>

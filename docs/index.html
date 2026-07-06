@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Album Roulette for YouTube Music 🎲</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #0f0f0f;
+    color: #fff;
+    font-family: Roboto, -apple-system, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 48px 16px;
+    margin: 0;
+  }
+  main { max-width: 640px; width: 100%; }
+  h1 { font-size: 30px; margin: 0 0 4px; }
+  .tagline { color: #aaa; margin: 0 0 8px; font-size: 16px; line-height: 1.5; }
+  .subtagline { color: #888; margin: 0 0 32px; font-size: 14px; }
+  h2 { font-size: 20px; margin: 40px 0 16px; }
+  .card {
+    background: #1c1c1c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h3 { font-size: 16px; margin: 0 0 6px; }
+  .card p { color: #ccc; font-size: 14px; line-height: 1.55; margin: 0; }
+  .card p + p { margin-top: 8px; }
+  .chip {
+    display: inline-block;
+    background: #2a2a2a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 13px;
+    color: #ddd;
+    margin: 2px 4px 2px 0;
+  }
+  kbd {
+    background: #333;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .privacy-card {
+    border-color: rgba(255, 0, 0, 0.25);
+  }
+  .privacy-card h3 { color: #fff; }
+  .go {
+    display: inline-block;
+    background: #f00;
+    color: #fff;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 12px 22px;
+    border-radius: 24px;
+    margin-top: 8px;
+    border: none;
+    cursor: pointer;
+  }
+  .go:hover { background: #d00; }
+  .go.disabled {
+    background: #333;
+    color: #999;
+    cursor: default;
+    pointer-events: none;
+  }
+  details {
+    margin-top: 20px;
+    background: #1c1c1c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 20px;
+  }
+  summary {
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+  }
+  details ol {
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 12px 0 4px;
+    padding-left: 20px;
+  }
+  details code {
+    background: #333;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 13px;
+  }
+  a { color: #fff; }
+  a.plain { color: #aaa; }
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #888;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  footer a { color: #ccc; }
+  .fine { color: #666; font-size: 12px; margin-top: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🎲 Album Roulette</h1>
+  <p class="tagline">One click plays a random album from your YouTube Music library — start to finish, the way albums were meant to be heard.</p>
+  <p class="subtagline">No streaming service offers this natively.</p>
+
+  <div class="card">
+    <h3>🎲 Fully random</h3>
+    <p>A 🎲 button appears in the YouTube Music header — plus a toolbar icon and keyboard shortcut <kbd>Alt+Shift+R</kbd> that work from any tab. Click it and a random album from your library starts at track 1, in order, no shuffle. It avoids repeating your last 20 picks, and it includes your uploaded albums.</p>
+  </div>
+
+  <div class="card">
+    <h3>Genre picks</h3>
+    <p>Chips like <span class="chip">Jazz · 74</span> play a random album within that genre. Genres are identified automatically in the background using free public music databases (Apple's iTunes Search and MusicBrainz) — a one-time lookup per album, cached forever, no account or API key required.</p>
+  </div>
+
+  <div class="card">
+    <h3>Semi-🎲 "Deal me 6"</h3>
+    <p>Shows six album covers from six different genres at once, so you can pick by mood instead of leaving it fully to chance.</p>
+  </div>
+
+  <div class="card">
+    <h3>Keep Rolling 🔁 (optional)</h3>
+    <p>When an album ends, a gentle four-note chime marks the boundary, then another random album starts automatically. Off by default — flip it on whenever you want the music to keep going.</p>
+  </div>
+
+  <div class="card">
+    <h3>Seasonal smarts</h3>
+    <p>Holiday albums sit out of full-random rolls outside the season, so a Christmas record won't ambush you in July. They stay available any time via their genre chip.</p>
+  </div>
+
+  <div class="card privacy-card">
+    <h3>🔒 Private by design</h3>
+    <p>No account, no API key, no server, no analytics. Your library list stays in your browser. The only thing ever sent anywhere is an album's title + artist, to public genre databases — nothing else.</p>
+    <p><a href="privacy.html">Read the full privacy policy →</a></p>
+  </div>
+
+  <h2>Install</h2>
+  <a class="go disabled" id="install-link" href="#">Coming to the Chrome Web Store</a>
+
+  <details>
+    <summary>Install manually in the meantime</summary>
+    <ol>
+      <li>Download or clone the GitHub repo: <a href="https://github.com/ThatAdamGuy/album-roulette">github.com/ThatAdamGuy/album-roulette</a></li>
+      <li>Open <code>chrome://extensions</code> in Chrome</li>
+      <li>Turn on <strong>Developer mode</strong> (top right)</li>
+      <li>Click <strong>Load unpacked</strong> and select the folder you downloaded</li>
+      <li>Open <a href="https://music.youtube.com/">music.youtube.com</a>, signed in, and look for the 🎲</li>
+    </ol>
+  </details>
+
+  <footer>
+    <p>Made by Adam Lasnik (<a href="https://www.threads.com/@thatadamguy">@thatadamguy on Threads</a>)</p>
+    <p><a href="https://github.com/ThatAdamGuy/album-roulette">GitHub repo</a> · <a href="privacy.html">Privacy policy</a></p>
+    <p class="fine">Not affiliated with or endorsed by YouTube or Google.</p>
+  </footer>
+</main>
+</body>
+</html>
