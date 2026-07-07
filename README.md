@@ -2,41 +2,64 @@
 
 One click plays a **random album from your YouTube Music library, start to finish** — the feature no streaming service has ever shipped.
 
-## How it works
+**Website:** [thatadamguy.github.io/album-roulette](https://thatadamguy.github.io/album-roulette/) · **Privacy policy:** [privacy.html](https://thatadamguy.github.io/album-roulette/privacy.html)
 
-- A 🎲 button appears in the YouTube Music header (and the extension's toolbar icon does the same thing from any tab).
-- Click it: the extension reads your library's album list — including **uploaded albums** — through YouTube Music's own internal API, using your existing signed-in session. Nothing leaves your browser; there are no accounts, keys, or servers.
-- It picks an album at random (avoiding your last 20 picks), navigates to it, and presses Play. Track 1, in order, no shuffle.
-- **Genres**: the ▾ next to the die (or right-click the die) opens the genre picker — chips like "Jazz · 74" play a random album within that genre, and **Semi-🎲 "Deal me 6"** shows six covers from six different genres to choose from. Genres come from the keyless iTunes Search API, tagged quietly in the background (~20 lookups/min; a big library takes under an hour, once, and is cached forever). The extension's toolbar icon also gets a right-click genre menu.
-- **Keep rolling 🔁**: an opt-in toggle in the popover. When the album you rolled finishes, whatever's playing gets paused, a short chime plays after a beat of silence (so it doesn't get swallowed by the songs on either side of it), and — if left on — another random album (same genre, if you picked one) starts after another beat. Off by default; doesn't touch YouTube Music's own Autoplay setting (deliberately — see below).
+## What it does
 
-## Install (developer mode)
+- A **🎲 button** in the YouTube Music header (plus the toolbar icon and a keyboard shortcut, `Alt+Shift+R`) picks a random album from your library — including uploaded albums — and plays it from track 1, in order, no shuffle. It avoids repeating your last 20 picks.
+- **Genre picks**: the ▾ next to the die opens a picker with chips like "Jazz · 88" that roll within a genre. Albums are genre-tagged automatically in the background using free public music databases; a large library takes about an hour, once, and the results are cached forever.
+- **Semi-🎲 "Deal me 6"**: six album covers from six different genres — pick by mood.
+- **Keep Rolling 🔁** (optional): when an album finishes, a gentle four-note chime marks the boundary, then another random album starts automatically (staying in the same genre if you rolled one).
+- **Seasonal smarts**: holiday albums sit out of fully-random rolls outside their season, but stay available via their genre chip.
 
-1. `chrome://extensions` → enable **Developer mode**
-2. **Load unpacked** → select this folder
-3. Open [music.youtube.com](https://music.youtube.com) (signed in) and click the 🎲
+## Privacy
 
-## Architecture (no build step, vanilla JS)
+No account, no API key, no server, no analytics. Your album list, genre tags, and settings live in your browser's local extension storage. The only data that ever leaves your browser is an album's **title and artist name**, sent to two public music databases (Apple's iTunes Search API and MusicBrainz) to identify its genre. Details in the [privacy policy](https://thatadamguy.github.io/album-roulette/privacy.html).
 
-- `manifest.json` — MV3. Permissions: `storage`, `contextMenus`.
-- `page.js` — MAIN-world content script. Talks to the InnerTube API (`FEmusic_liked_albums` + `FEmusic_library_privately_owned_releases` shelves, with continuation paging) authenticated via SAPISIDHASH computed from the page's own cookies. Playback: resolve the album once into {first track, last track, all track ids, album playlistId}, then **hard-load `/watch?v=<first>&list=<playlistId>`** — YTM autoplays watch URLs natively, so there's no Play button to hunt and no redirect document. (Deliberately not SPA: `yt-navigate` into playlist pages renders broken widths — the "columns are off" bug; and not `/browse/MPREb…` hard loads: those bounce through a throwaway redirect shell — the blank pages.) Resolution data rides along in the sessionStorage flag, so the arriving page arms album-end detection with zero extra API calls; `/browse/` + click-Play survives as fallback. Album-end detection: media `ended` event first (with an immediate pause inside the handler, so YTM Autoplay never gets to advance), 1s state poll as fallback (YTM sometimes parks at queue end as paused-with-ended=false). A 600ms polling clamp also guards the tracklist against horizontal trackpad-drift (that element fires no scroll events, so polling is the only guard that works). Breadcrumb log in localStorage `ytra_log` for field debugging.
-  - **Album-end detection**: after a roll, one extra browse call learns the album's full set of track videoIds (filtered by matching playlistId, radio/shuffle `RDAM…` variants excluded) and its last one. A 1s poll reads YTM's own `#movie_player.getVideoData().video_id` and fires `YTRA_ALBUM_ENDED` only when playback was on the last track *and* the new video isn't in the album's own tracklist at all — the second half of that check matters: keying off "not equal to the last track" alone misfires when a user skips *backward* from the last track to replay an earlier song (caught in testing, fixed before shipping). Deliberately 1s-grained and skip-tolerant: it keys off which track is last, not elapsed play time.
-- `content.js` — isolated-world content script. Header 🎲+▾ buttons, genre popover (chips + Semi-🎲 deal grid + Keep Rolling toggle), toasts, album cache (`chrome.storage.local` `ytra_albums_v2`, 24h TTL, includes thumbnails), pick history, and the genre enrichment pump: iTunes Search API lookups (raw `primaryGenreName` stored permanently under `ytra_genres`, keyed by browseId), throttled to the API's ~20/min limit, single-tab via the Web Locks API, resumable. Raw genre → display bucket mapping lives in one table (`GENRE_TO_BUCKET`) so re-bucketing never requires re-fetching. On `YTRA_ALBUM_ENDED`: plays a synthesized four-note chime (Web Audio API — no bundled file, no licensing question) and, if Keep Rolling is on, rolls another album (same genre bucket as the one that just finished, if any). Bridges to `page.js` via `window.postMessage`.
-- `background.js` — service worker; routes toolbar clicks, keyboard shortcut, and the toolbar-icon context menu (per-genre rolls, rebuilt from `ytra_buckets` counts) to a YTM tab, preferring the audible one; opens YTM if none exists. Also proxies genre-lookup fetches (CORS-exempt via host permissions) and drives the tagging-progress toolbar badge.
+## Install
 
-## Genre data sources (all keyless, all from the user's own IP)
+**Chrome Web Store listing coming soon.** Until then:
 
-1. **iTunes Search API** — primary. Paced at 4s/request (the limiter is per-IP, burst-sensitive, and stochastic; 403 = defer album + escalating jittered pause, never retry-loop). Fetched from the background worker (host permission) because iTunes' CORS header is unreliable.
-2. **MusicBrainz** — fallback for albums iTunes can't match. One search request returns community tags inline; hard 1 req/sec limit respected.
-3. Future: Chrome built-in AI (Gemini Nano, Chrome 138+, hardware-gated) as an opportunistic offline tier; possibly a bundled MusicBrainz-derived artist→genre map.
+1. Download or clone this repo
+2. `chrome://extensions` → enable **Developer mode**
+3. **Load unpacked** → select the folder
+4. Open [music.youtube.com](https://music.youtube.com) (signed in) and click the 🎲
 
-## On YouTube Music's own "Autoplay" setting
+Requires a YouTube Music account with albums saved to your library. Chrome/Chromium only, desktop only.
 
-YTM has its own Up Next toggle ("Add similar content to the end of the queue") that appends unrelated suggested tracks once an album's tracklist ends. Album Roulette does **not** auto-disable it — that's a global YTM setting, and silently flipping it would surprise/annoy anyone using YTM outside the extension. Keep Rolling coexists with it instead: if Autoplay is on, you may briefly hear one of its suggestions in the moment before Keep Rolling's next pick takes over. Turn Autoplay off yourself in Up Next if you'd rather it never appear.
+## KindnessWare 🎵
 
-## Roadmap
+Album Roulette is free, with no ads or upsells — ever. If it makes your listening better, tell the author, and consider donating whatever feels right to an arts-related cause of your choice (music education, your local venue, a school band program…).
 
-- Remote status/kill flag for genre lookups (ToF-style status.json) before public release.
-- Settings toggle: include Holiday-genre albums in full-random year-round (currently auto-excluded outside their season — Nov 15–Jan 5 for Christmas-ish genres, October for Halloween; the Holiday chip and Semi-🎲 are unaffected). Note: this filter only ever touches what iTunes/MusicBrainz label Holiday/Christmas/Halloween — in practice Western Christmas music — so it structurally can't catch e.g. Lunar New Year or Diwali albums, which carry ordinary genres.
-- Recent-rolls list in the popover (history is already tracked).
-- Companion mobile trigger: export album deep-links for an iOS Shortcut ("Hey Siri, random album").
+---
+
+## For developers
+
+Vanilla JS, Manifest V3, no build step. YouTube Music has no official API, so this extension works the way the YTM web app itself does — which makes some of the engineering below unusual, and all of it potentially fragile if Google changes things.
+
+### Components
+
+- **`page.js`** (MAIN-world content script) — talks to YTM's internal InnerTube API (library album shelves with continuation paging, authenticated via a SAPISIDHASH computed from the page's own cookies). Rolls resolve the chosen album into its first/last track IDs, full track list, and album playlist ID, then navigate to the album's playlist page and press Play (with a `/watch?v=…&list=…` fallback if the playlist page stalls, since watch URLs autoplay natively). Album-end detection uses three cooperating signals — a pre-end timer, the media `ended` event, and a fast track-transition poll with carryover suppression — because YTM's gapless preloading flips player state to the next queue item seconds before audio actually ends. A rolling debug log is kept in `localStorage.ytra_log`.
+- **`content.js`** (isolated-world content script) — the 🎲/▾ UI, genre popover (built with DOM APIs only: music.youtube.com enforces Trusted Types, so `innerHTML` throws), album cache (24h TTL), pick history, the Keep Rolling boundary handler (pause → chime → next roll, with a guard that suppresses YTM Autoplay audio during the handoff), and the genre-enrichment pump.
+- **`background.js`** (service worker) — routes toolbar clicks, the keyboard shortcut, and the toolbar right-click genre menu to a YTM tab (preferring the audible one); proxies genre-lookup fetches (host-permission fetches are CORS-exempt, and iTunes' CORS headers are unreliable); drives the tagging-progress badge.
+
+### Genre pipeline (keyless by design)
+
+1. **iTunes Search API** — primary. Its limiter is per-IP, burst-sensitive, and stochastic: ~4s spacing is reliable; on a 403, defer the album and back off with jitter — never retry-loop (sustained hammering earns long penalty windows, and datacenter IPs get blanket-blocked, which is one reason this extension will never proxy through a server).
+2. **MusicBrainz** — fallback for albums iTunes can't match; community tags come back inline in one search request; hard 1 req/sec limit respected.
+3. Raw genre strings are stored permanently; mapping to display buckets is a lookup table plus substring rules, so re-bucketing never requires re-fetching.
+
+### Why Keep Rolling coexists with YTM's Autoplay
+
+YTM's own Up Next "Autoplay" toggle appends suggested tracks when a queue ends. Album Roulette deliberately does **not** flip that setting — it's global, and silently changing it would surprise people outside the extension. Instead the boundary handler suppresses stray Autoplay audio during the chime/handoff window. If Autoplay is on you may still see (not hear) a suggested track flash in the player bar between albums; turn Autoplay off in Up Next if you'd rather not.
+
+### Roadmap
+
+- Remote status/kill JSON hosted on the project site, so genre lookups can be disabled gracefully for everyone if a metadata API changes its rules.
+- Settings toggle: include holiday albums in fully-random rolls year-round. (The current seasonal filter only affects what the metadata sources label Holiday/Christmas/Halloween — in practice Western Christmas music; festive albums from other traditions carry ordinary genres and are never filtered.)
+- Recent-rolls list in the popover.
+- Companion mobile trigger: exported album deep-links + an iOS Shortcut ("Hey Siri, random album").
+
+---
+
+*Album Roulette is an independent project, not affiliated with, endorsed by, or sponsored by YouTube, Google, or Apple.*
